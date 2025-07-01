@@ -1,6 +1,7 @@
 import { RegionSelector } from '@/components/RegionSelector';
 import { TopicSelector } from '@/components/TopicSelector';
 import { YearSelector } from '@/components/YearSelector';
+import { Typography } from '@/constants/Typography';
 import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -264,8 +265,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   profileInitial: {
-    fontSize: 14,
-    fontWeight: '600',
+    ...Typography.profileInitial,
     color: '#1A1A1A',
   },
   scrollView: {
@@ -290,15 +290,12 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
   },
   heroTitle: {
-    fontSize: 24,
-    fontWeight: '700',
+    ...Typography.heroTitle,
     color: '#1A1A1A',
-    lineHeight: 32,
     marginBottom: 12,
   },
   heroText: {
-    fontSize: 16,
-    lineHeight: 24,
+    ...Typography.heroText,
     color: '#333333',
   },
   secondaryEventsContainer: {
@@ -310,10 +307,8 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   secondaryTitle: {
-    fontSize: 20,
-    fontWeight: '600',
+    ...Typography.secondaryTitle,
     color: '#1A1A1A',
-    lineHeight: 28,
   },
   secondaryImage: {
     width: '100%',
@@ -321,8 +316,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   secondaryText: {
-    fontSize: 15,
-    lineHeight: 22,
+    ...Typography.secondaryText,
     color: '#444444',
   },
   navigationContainer: {
@@ -346,11 +340,11 @@ const styles = StyleSheet.create({
     borderColor: '#E8EAED',
   },
   navButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
+    ...Typography.navButtonText,
     color: '#4A90E2',
   },
   navButtonTextDisabled: {
+    ...Typography.navButtonText,
     color: '#9AA0A6',
   },
   bottomSpacing: {
@@ -381,9 +375,8 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   pillButtonText: {
+    ...Typography.pillButtonText,
     color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
   },
   bottomGradient: {
     position: 'absolute',

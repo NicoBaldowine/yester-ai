@@ -1,17 +1,18 @@
+import { Typography } from '@/constants/Typography';
+import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useRef, useState } from 'react';
 import {
     Dimensions,
     Modal,
-    SafeAreaView,
     ScrollView,
-    StatusBar,
     StyleSheet,
     Text,
     TouchableOpacity,
     View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { height: screenHeight } = Dimensions.get('window');
 const ITEM_HEIGHT = 92;
@@ -28,6 +29,7 @@ const topics = ['History', 'Music', 'Science', 'Art', 'Sports'];
 export function TopicSelector({ visible, currentTopic, onClose, onSelect }: TopicSelectorProps) {
   const [selectedTopic, setSelectedTopic] = useState(currentTopic);
   const scrollViewRef = useRef<ScrollView>(null);
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     if (visible) {
@@ -88,16 +90,17 @@ export function TopicSelector({ visible, currentTopic, onClose, onSelect }: Topi
       onRequestClose={onClose}
       statusBarTranslucent
     >
-      <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="dark-content" />
-        
+      <View style={styles.container}>
         {/* Center selection indicator */}
         <View style={styles.centerIndicator} />
         
         <ScrollView
           ref={scrollViewRef}
           style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, {
+            paddingTop: screenHeight / 2 - ITEM_HEIGHT / 2 + insets.top,
+            paddingBottom: screenHeight / 2 - ITEM_HEIGHT / 2 + insets.bottom,
+          }]}
           showsVerticalScrollIndicator={false}
           snapToInterval={ITEM_HEIGHT}
           snapToAlignment="center"
@@ -108,38 +111,40 @@ export function TopicSelector({ visible, currentTopic, onClose, onSelect }: Topi
           {topics.map(renderTopic)}
         </ScrollView>
 
-        {/* Top Gradient */}
+        {/* Top Gradient - Edge-to-edge behind Dynamic Island */}
         <LinearGradient
           colors={['rgba(255,255,255,1)', 'rgba(255,255,255,0)']}
-          style={styles.topGradient}
+          style={[styles.topGradient, { height: 150 + insets.top }]}
           pointerEvents="none"
         />
 
-        {/* Bottom Gradient */}
+        {/* Bottom Gradient - Edge-to-edge below home indicator */}
         <LinearGradient
           colors={['rgba(255,255,255,0)', 'rgba(255,255,255,1)']}
-          style={styles.bottomGradient}
+          style={[styles.bottomGradient, { height: 150 + insets.bottom }]}
           pointerEvents="none"
         />
 
-        {/* Floating Cancel Button - Left */}
-        <TouchableOpacity
-          style={styles.cancelButton}
-          onPress={handleCancel}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.cancelButtonText}>Cancel</Text>
-        </TouchableOpacity>
+        {/* Floating Cancel Button with Blur/Glass Effect */}
+        <BlurView intensity={20} tint="light" style={[styles.cancelButton, { bottom: 40 + insets.bottom }]}>
+          <TouchableOpacity
+            style={styles.cancelButtonTouchable}
+            onPress={handleCancel}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.cancelButtonText}>Cancel</Text>
+          </TouchableOpacity>
+        </BlurView>
 
         {/* Floating Select Button - Right */}
         <TouchableOpacity
-          style={styles.selectButton}
+          style={[styles.selectButton, { bottom: 40 + insets.bottom }]}
           onPress={handleSelect}
           activeOpacity={0.8}
         >
           <Text style={styles.selectButtonText}>Select</Text>
         </TouchableOpacity>
-      </SafeAreaView>
+      </View>
     </Modal>
   );
 }
@@ -164,8 +169,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingTop: screenHeight / 2 - ITEM_HEIGHT / 2,
-    paddingBottom: screenHeight / 2 - ITEM_HEIGHT / 2,
+    // Dynamic padding now handled inline
   },
   topicContainer: {
     height: ITEM_HEIGHT,
@@ -174,64 +178,56 @@ const styles = StyleSheet.create({
   },
   topicText: {
     textAlign: 'center',
-    fontWeight: 'bold',
   },
   selectedTopicText: {
-    fontSize: 80,
+    ...Typography.selectedYearText,
     color: '#000000',
-    lineHeight: 80,
   },
   unselectedTopicText: {
-    fontSize: 70,
+    ...Typography.unselectedYearText,
     color: 'rgba(0, 0, 0, 0.2)',
-    lineHeight: 70,
   },
   topGradient: {
     position: 'absolute',
-    top: 0,
+    top: 0, // Edge-to-edge from very top
     left: 0,
     right: 0,
-    height: 150,
+    // height now dynamic with insets
     zIndex: 2,
     pointerEvents: 'none',
   },
   bottomGradient: {
     position: 'absolute',
-    bottom: 0,
+    bottom: 0, // Edge-to-edge to very bottom
     left: 0,
     right: 0,
-    height: 150,
+    // height now dynamic with insets
     zIndex: 2,
     pointerEvents: 'none',
   },
   cancelButton: {
     position: 'absolute',
-    bottom: 40,
+    // bottom now dynamic with safe area
     left: 24,
-    backgroundColor: '#FFFFFF',
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 25,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 8,
-    borderWidth: 1,
-    borderColor: '#E5E5E7',
+    overflow: 'hidden',
     zIndex: 10,
   },
+  cancelButtonTouchable: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   cancelButtonText: {
+    ...Typography.cancelButtonText,
     color: '#1A1A1A',
-    fontSize: 16,
-    fontWeight: '600',
   },
   selectButton: {
     position: 'absolute',
-    bottom: 40,
+    // bottom now dynamic with safe area
     right: 24,
     backgroundColor: '#1A1A1A',
     paddingHorizontal: 24,
@@ -248,8 +244,7 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   selectButtonText: {
+    ...Typography.selectButtonText,
     color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
   },
 }); 
