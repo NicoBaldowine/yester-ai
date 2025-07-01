@@ -1,12 +1,15 @@
+import { ProfileScreen } from '@/components/ProfileScreen';
 import { RegionSelector } from '@/components/RegionSelector';
 import { TopicSelector } from '@/components/TopicSelector';
 import { YearSelector } from '@/components/YearSelector';
 import { Typography } from '@/constants/Typography';
+import { useHistoricalContent } from '@/hooks/useHistoricalContent';
 import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
+    ActivityIndicator,
     Dimensions,
     Image,
     ScrollView,
@@ -17,14 +20,6 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-interface Event {
-  id: string;
-  title: string;
-  content: string;
-  imageUrl: string;
-  isPrimary: boolean;
-}
-
 const { height: screenHeight } = Dimensions.get('window');
 
 export default function ContentScreen() {
@@ -33,57 +28,20 @@ export default function ContentScreen() {
   // Default values for home screen
   const [year, setYear] = useState(1990);
   const [topic, setTopic] = useState('History');
-  const [region, setRegion] = useState('America');
+  const [region, setRegion] = useState('Americas');
 
   const [showYearSelector, setShowYearSelector] = useState(false);
   const [showTopicSelector, setShowTopicSelector] = useState(false);
   const [showRegionSelector, setShowRegionSelector] = useState(false);
+  const [showProfileScreen, setShowProfileScreen] = useState(false);
 
-  // Expanded mock data - will be replaced with AI-generated content
-  const events: Event[] = [
-    {
-      id: '1',
-      title: 'Germany Reunification',
-      content: '🏛️ After 45 years of separation, on October 3rd, 1990, the two Germanys became one again.\n\nThe Berlin Wall, which for decades had divided not only a country but entire families, was no longer there.\n\n🌍 In the streets, thousands of people celebrated waving flags.\n🎉 The air smelled of hope.\n⚡ Songs sounded that mixed tears, hugs and future.\n\nThe Cold War was coming to an end, and Berlin, once again a capital, was preparing for a new era.\n\nThis historic moment marked the end of a divided Europe and the beginning of a new chapter in world history.',
-      imageUrl: 'https://images.unsplash.com/photo-1560969184-10fe8719e047?w=800&h=400&fit=crop',
-      isPrimary: true
-    },
-    {
-      id: '2',
-      title: 'Hubble Space Telescope Launch',
-      content: '🚀 NASA launches the Hubble Space Telescope, revolutionizing our understanding of the universe with unprecedented clarity and detail.\n\nThis incredible achievement opened new windows to the cosmos, allowing scientists to observe distant galaxies, nebulae, and stellar phenomena with extraordinary precision.\n\n✨ The telescope would go on to capture some of the most breathtaking images of space ever seen by humanity.',
-      imageUrl: 'https://images.unsplash.com/photo-1446776653964-20c1d3a81b06?w=800&h=300&fit=crop',
-      isPrimary: false
-    },
-    {
-      id: '3',
-      title: 'World Wide Web Created',
-      content: '💻 Tim Berners-Lee creates the World Wide Web at CERN, laying the foundation for the modern internet as we know it today.\n\nThis groundbreaking invention would transform global communication, commerce, and access to information in ways that were previously unimaginable.\n\n🌐 The first website went live, marking the beginning of the digital revolution that would reshape society.',
-      imageUrl: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&h=300&fit=crop',
-      isPrimary: false
-    },
-    {
-      id: '4',
-      title: 'Nelson Mandela Released',
-      content: '✊ Nelson Mandela is released from prison after 27 years of imprisonment, marking a crucial moment in the fight against apartheid in South Africa.\n\nHis release signaled the beginning of the end of apartheid and the start of negotiations for a democratic South Africa.\n\n🕊️ This moment inspired people around the world and became a symbol of perseverance and the triumph of justice over oppression.',
-      imageUrl: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&h=300&fit=crop',
-      isPrimary: false
-    },
-    {
-      id: '5',
-      title: 'Iraqi Invasion of Kuwait',
-      content: '⚔️ Iraq invades Kuwait, leading to the Gulf War and significant changes in Middle Eastern geopolitics.\n\nThis conflict would draw international intervention and reshape alliances in the region.\n\n🛡️ The response from the international community demonstrated the importance of collective security in the post-Cold War era.',
-      imageUrl: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&h=300&fit=crop',
-      isPrimary: false
-    },
-    {
-      id: '6',
-      title: 'Microsoft Windows 3.0 Released',
-      content: '💾 Microsoft releases Windows 3.0, which becomes the first commercially successful version of Windows.\n\nThis operating system would revolutionize personal computing and establish Microsoft as a dominant force in the software industry.\n\n🖥️ The graphical user interface made computers more accessible to everyday users, changing how people interact with technology.',
-      imageUrl: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&h=300&fit=crop',
-      isPrimary: false
-    }
-  ];
+  // AI Content Hook - Reemplaza los datos dummy
+  const { events, isLoading, error, generateContent, clearError, cancelGeneration } = useHistoricalContent();
+
+  // Generar contenido cuando cambien los parámetros (SIN generateContent en dependencias)
+  useEffect(() => {
+    generateContent({ year, region, topic });
+  }, [year, region, topic]); // Solo los parámetros como dependencias
 
   const primaryEvent = events.find(e => e.isPrimary);
   const secondaryEvents = events.filter(e => !e.isPrimary);
@@ -92,22 +50,96 @@ export default function ContentScreen() {
     const newYear = direction === 'next' ? year + 1 : year - 1;
     if (newYear >= 0 && newYear <= 2025) {
       setYear(newYear);
+      // El useEffect se encargará de generar nuevo contenido
     }
   };
 
   const handleYearSelect = (newYear: number) => {
     setYear(newYear);
     setShowYearSelector(false);
+    // El useEffect se encargará de generar nuevo contenido
   };
 
   const handleTopicChange = (newTopic: string) => {
     setTopic(newTopic);
     setShowTopicSelector(false);
+    // El useEffect se encargará de generar nuevo contenido
   };
 
   const handleRegionChange = (newRegion: string) => {
     setRegion(newRegion);
     setShowRegionSelector(false);
+    // El useEffect se encargará de generar nuevo contenido
+  };
+
+  const handleProfilePress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setShowProfileScreen(true);
+  };
+
+  // Componente de Loading Premium
+  const LoadingScreen = () => {
+    const getTopicEmoji = (topic: string) => {
+      const emojiMap: { [key: string]: string } = {
+        'History': '🏛️',
+        'Science': '🔬',
+        'Art': '🎨',
+        'Music': '🎶',
+        'Sports': '⚽'
+      };
+      return emojiMap[topic] || '🏛️';
+    };
+
+    const handleCancel = () => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      cancelGeneration();
+    };
+
+    return (
+      <View style={styles.loadingScreen}>
+        {/* Center Content */}
+        <View style={styles.loadingContent}>
+          <ActivityIndicator size="large" color="#000000" style={styles.loader} />
+          <Text style={styles.loadingTitle}>
+            Yester in {year}{'\n'}exploring {topic} {getTopicEmoji(topic)}{'\n'}of {region}..
+          </Text>
+        </View>
+
+        {/* Cancel Button - Centered */}
+        <View style={[styles.loadingCancelContainer, { bottom: 40 + insets.bottom }]}>
+          <BlurView intensity={20} tint="light" style={styles.loadingCancelButton}>
+            <TouchableOpacity
+              style={styles.loadingCancelButtonTouchable}
+              onPress={handleCancel}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.loadingCancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
+          </BlurView>
+        </View>
+      </View>
+    );
+  };
+
+  // Componente de Error
+  const ErrorMessage = () => {
+    if (!error) return null;
+    
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorTitle}>⚠️ Something went wrong</Text>
+        <Text style={styles.errorText}>{error}</Text>
+        <TouchableOpacity 
+          style={styles.retryButton}
+          onPress={() => {
+            clearError();
+            generateContent({ year, region, topic });
+          }}
+        >
+          <Text style={styles.retryButtonText}>🔄 Retry</Text>
+        </TouchableOpacity>
+      </View>
+    );
   };
 
   return (
@@ -117,13 +149,16 @@ export default function ContentScreen() {
         <TouchableOpacity 
           style={styles.profileTouchable} 
           activeOpacity={0.8}
-          onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
+          onPress={handleProfilePress}
         >
           <Text style={styles.profileInitial}>N</Text>
         </TouchableOpacity>
       </BlurView>
       
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        {/* Error Message */}
+        <ErrorMessage />
+
         {/* Full Width Hero Image - covers from very top edge-to-edge */}
         {primaryEvent && (
           <View style={styles.heroContainer}>
@@ -148,32 +183,41 @@ export default function ContentScreen() {
           ))}
         </View>
 
-        {/* Navigation Buttons */}
+        {/* Navigation Buttons - Glass Pills */}
         <View style={styles.navigationContainer}>
-          <TouchableOpacity
-            style={[styles.navButton, year <= 0 && styles.navButtonDisabled]}
-            onPress={() => handleYearChange('previous')}
-            disabled={year <= 0}
-          >
-            <Text style={[styles.navButtonText, year <= 0 && styles.navButtonTextDisabled]}>
-              Previous Year
-            </Text>
-          </TouchableOpacity>
+          <BlurView intensity={20} tint="light" style={[styles.navPillButton, (year <= 0 || isLoading) && styles.navPillButtonDisabled]}>
+            <TouchableOpacity
+              style={styles.navPillButtonTouchable}
+              onPress={() => handleYearChange('previous')}
+              disabled={year <= 0 || isLoading}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.navPillButtonText, (year <= 0 || isLoading) && styles.navPillButtonTextDisabled]}>
+                Previous Year
+              </Text>
+            </TouchableOpacity>
+          </BlurView>
           
-          <TouchableOpacity
-            style={[styles.navButton, year >= 2025 && styles.navButtonDisabled]}
-            onPress={() => handleYearChange('next')}
-            disabled={year >= 2025}
-          >
-            <Text style={[styles.navButtonText, year >= 2025 && styles.navButtonTextDisabled]}>
-              Next Year
-            </Text>
-          </TouchableOpacity>
+          <BlurView intensity={20} tint="light" style={[styles.navPillButton, (year >= 2025 || isLoading) && styles.navPillButtonDisabled]}>
+            <TouchableOpacity
+              style={styles.navPillButtonTouchable}
+              onPress={() => handleYearChange('next')}
+              disabled={year >= 2025 || isLoading}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.navPillButtonText, (year >= 2025 || isLoading) && styles.navPillButtonTextDisabled]}>
+                Next Year
+              </Text>
+            </TouchableOpacity>
+          </BlurView>
         </View>
 
         {/* Bottom spacing for floating buttons */}
         <View style={styles.bottomSpacing} />
       </ScrollView>
+
+      {/* Loading Screen */}
+      {isLoading && <LoadingScreen />}
 
       {/* Bottom Gradient Background - Edge-to-edge below home indicator */}
       <LinearGradient
@@ -185,59 +229,80 @@ export default function ContentScreen() {
       {/* Horizontal Floating Pill Buttons with Haptics - respecting safe areas */}
       <View style={[styles.floatingButtons, { bottom: 10 + insets.bottom }]}>
         <TouchableOpacity
-          style={styles.pillButton}
+          style={[styles.pillButton, isLoading && styles.pillButtonDisabled]}
           onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            setShowYearSelector(true);
+            if (!isLoading) {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              setShowYearSelector(true);
+            }
           }}
           activeOpacity={0.8}
+          disabled={isLoading}
         >
-          <Text style={styles.pillButtonText}>{year}</Text>
+          <Text style={[styles.pillButtonText, isLoading && styles.pillButtonTextDisabled]}>
+            {year}
+          </Text>
         </TouchableOpacity>
         
         <TouchableOpacity
-          style={styles.pillButton}
+          style={[styles.pillButton, isLoading && styles.pillButtonDisabled]}
           onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            setShowTopicSelector(true);
+            if (!isLoading) {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              setShowTopicSelector(true);
+            }
           }}
           activeOpacity={0.8}
+          disabled={isLoading}
         >
-          <Text style={styles.pillButtonText}>{topic}</Text>
+          <Text style={[styles.pillButtonText, isLoading && styles.pillButtonTextDisabled]}>
+            {topic}
+          </Text>
         </TouchableOpacity>
         
         <TouchableOpacity
-          style={styles.pillButton}
+          style={[styles.pillButton, isLoading && styles.pillButtonDisabled]}
           onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            setShowRegionSelector(true);
+            if (!isLoading) {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              setShowRegionSelector(true);
+            }
           }}
           activeOpacity={0.8}
+          disabled={isLoading}
         >
-          <Text style={styles.pillButtonText}>{region}</Text>
+          <Text style={[styles.pillButtonText, isLoading && styles.pillButtonTextDisabled]}>
+            {region}
+          </Text>
         </TouchableOpacity>
       </View>
 
-      {/* Full Screen Modals */}
+      {/* Modal Selectors */}
       <YearSelector
         visible={showYearSelector}
         currentYear={year}
-        onClose={() => setShowYearSelector(false)}
         onSelect={handleYearSelect}
+        onClose={() => setShowYearSelector(false)}
       />
       
       <TopicSelector
         visible={showTopicSelector}
         currentTopic={topic}
-        onClose={() => setShowTopicSelector(false)}
         onSelect={handleTopicChange}
+        onClose={() => setShowTopicSelector(false)}
       />
       
       <RegionSelector
         visible={showRegionSelector}
         currentRegion={region}
-        onClose={() => setShowRegionSelector(false)}
         onSelect={handleRegionChange}
+        onClose={() => setShowRegionSelector(false)}
+      />
+
+      {/* Profile Screen */}
+      <ProfileScreen
+        visible={showProfileScreen}
+        onClose={() => setShowProfileScreen(false)}
       />
     </View>
   );
@@ -326,24 +391,30 @@ const styles = StyleSheet.create({
     marginBottom: 32,
     gap: 16,
   },
-  navButton: {
+  navPillButton: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
+    borderRadius: 25,
+    overflow: 'hidden',
+    backgroundColor: 'rgba(128, 128, 128, 0.1)', // Light gray tint for better visibility on white
     borderWidth: 1,
-    borderColor: '#E9ECEF',
+    borderColor: 'rgba(128, 128, 128, 0.2)',
   },
-  navButtonDisabled: {
-    backgroundColor: '#F1F3F4',
-    borderColor: '#E8EAED',
+  navPillButtonDisabled: {
+    backgroundColor: 'rgba(128, 128, 128, 0.05)',
+    borderColor: 'rgba(128, 128, 128, 0.1)',
   },
-  navButtonText: {
+  navPillButtonTouchable: {
+    width: '100%',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  navPillButtonText: {
     ...Typography.navButtonText,
-    color: '#4A90E2',
+    color: '#1A1A1A',
   },
-  navButtonTextDisabled: {
+  navPillButtonTextDisabled: {
     ...Typography.navButtonText,
     color: '#9AA0A6',
   },
@@ -378,6 +449,15 @@ const styles = StyleSheet.create({
     ...Typography.pillButtonText,
     color: '#FFFFFF',
   },
+  pillButtonDisabled: {
+    backgroundColor: '#F5F5F7',
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+  },
+  pillButtonTextDisabled: {
+    ...Typography.pillButtonText,
+    color: '#8E8E93',
+  },
   bottomGradient: {
     position: 'absolute',
     left: 0,
@@ -385,5 +465,83 @@ const styles = StyleSheet.create({
     bottom: 0, // Edge-to-edge to very bottom
     height: 150 + 34, // Extra height to cover home indicator area + gradient
     zIndex: 10, // Below pills (pills have higher zIndex)
+  },
+  loadingScreen: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    backgroundColor: '#FFFFFF', // Full white background
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 100,
+  },
+  loadingContent: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loader: {
+    marginBottom: 32,
+  },
+  loadingTitle: {
+    fontFamily: 'BricolageGrotesque_700Bold',
+    fontSize: 22,
+    fontWeight: '700',
+    letterSpacing: 22 * -0.05, // -5% letter spacing
+    lineHeight: 22 * 1.3, // 130% line height
+    textAlign: 'center',
+    color: '#000000',
+  },
+  loadingCancelContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 110,
+  },
+  loadingCancelButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 25,
+    overflow: 'hidden',
+  },
+  loadingCancelButtonTouchable: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingCancelButtonText: {
+    ...Typography.cancelButtonText,
+    color: '#1A1A1A',
+  },
+  errorContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorTitle: {
+    ...Typography.errorTitle,
+    color: '#FFFFFF',
+    marginBottom: 12,
+  },
+  errorText: {
+    ...Typography.errorText,
+    color: '#FFFFFF',
+  },
+  retryButton: {
+    backgroundColor: '#4A90E2',
+    padding: 12,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    ...Typography.retryButtonText,
+    color: '#FFFFFF',
   },
 }); 

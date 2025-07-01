@@ -5,8 +5,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useRef, useState } from 'react';
 import {
     Dimensions,
+    FlatList,
     Modal,
-    ScrollView,
     StyleSheet,
     Text,
     TouchableOpacity,
@@ -15,7 +15,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { height: screenHeight } = Dimensions.get('window');
-const ITEM_HEIGHT = 92;
+const ITEM_HEIGHT = 70;
 
 interface RegionSelectorProps {
   visible: boolean;
@@ -24,36 +24,64 @@ interface RegionSelectorProps {
   onSelect: (region: string) => void;
 }
 
-const regions = ['Global', 'America', 'Europe', 'Asia', 'Africa', 'Oceania'];
+interface RegionItem {
+  name: string;
+  index: number;
+}
+
+const continentalRegions = ['Global', 'Americas', 'Europe', 'Asia', 'Africa', 'Oceania'];
+
+const topCountries = [
+  'United States', 'China', 'United Kingdom', 'Germany', 'France', 
+  'Japan', 'India', 'Italy', 'Brazil', 'Canada', 
+  'Russia', 'Spain', 'Australia', 'South Korea', 'Mexico',
+  'Netherlands', 'Turkey', 'Saudi Arabia', 'Chile', 'Argentina'
+];
+
+// Combine all regions and countries into one array
+const allRegions = [...continentalRegions, ...topCountries];
 
 export function RegionSelector({ visible, currentRegion, onClose, onSelect }: RegionSelectorProps) {
   const [selectedRegion, setSelectedRegion] = useState(currentRegion);
-  const scrollViewRef = useRef<ScrollView>(null);
+  const flatListRef = useRef<FlatList>(null);
   const insets = useSafeAreaInsets();
+
+  // Create regions array with index
+  const regions: RegionItem[] = allRegions.map((region, index) => ({
+    name: region,
+    index: index
+  }));
+
+  // Simple item layout for FlatList
+  const getItemLayout = (data: any, index: number) => ({
+    length: ITEM_HEIGHT,
+    offset: ITEM_HEIGHT * index,
+    index,
+  });
 
   useEffect(() => {
     if (visible) {
-      // Keep the currently selected region when reopening (this was the main issue)
-      // Don't reset to currentRegion prop, use the state selectedRegion
-      
+      // Keep the currently selected region when reopening
       setTimeout(() => {
-        const targetRegion = selectedRegion; // Use selectedRegion, not currentRegion
-        const currentIndex = regions.indexOf(targetRegion);
-        if (currentIndex !== -1 && scrollViewRef.current) {
-          const offsetY = currentIndex * ITEM_HEIGHT;
-          scrollViewRef.current.scrollTo({ y: offsetY, animated: false });
+        const targetRegion = selectedRegion;
+        const currentIndex = regions.findIndex(item => item.name === targetRegion);
+        if (currentIndex !== -1 && flatListRef.current) {
+          flatListRef.current.scrollToIndex({
+            index: currentIndex,
+            animated: false,
+          });
         }
       }, 100);
     }
-  }, [visible]); // Only depend on visible, not currentRegion
+  }, [visible]);
 
   const handleScroll = (event: any) => {
     const offsetY = event.nativeEvent.contentOffset.y;
     const index = Math.round(offsetY / ITEM_HEIGHT);
-    const region = regions[index];
+    const regionItem = regions[index];
     
-    if (region && region !== selectedRegion) {
-      setSelectedRegion(region);
+    if (regionItem && regionItem.name !== selectedRegion) {
+      setSelectedRegion(regionItem.name);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
   };
@@ -68,20 +96,22 @@ export function RegionSelector({ visible, currentRegion, onClose, onSelect }: Re
     onClose();
   };
 
-  const renderRegion = (region: string, index: number) => {
-    const isSelected = region === selectedRegion;
+  const renderRegion = ({ item }: { item: RegionItem }) => {
+    const isSelected = item.name === selectedRegion;
     
     return (
-      <View key={region} style={styles.regionContainer}>
+      <View style={styles.regionContainer}>
         <Text style={[
           styles.regionText,
           isSelected ? styles.selectedRegionText : styles.unselectedRegionText
         ]}>
-          {region}
+          {item.name}
         </Text>
       </View>
     );
   };
+
+  const keyExtractor = (item: RegionItem) => item.name;
 
   return (
     <Modal
@@ -94,10 +124,14 @@ export function RegionSelector({ visible, currentRegion, onClose, onSelect }: Re
         {/* Center selection indicator */}
         <View style={styles.centerIndicator} />
         
-        <ScrollView
-          ref={scrollViewRef}
-          style={styles.scrollView}
-          contentContainerStyle={[styles.scrollContent, {
+        <FlatList
+          ref={flatListRef}
+          data={regions}
+          renderItem={renderRegion}
+          keyExtractor={keyExtractor}
+          getItemLayout={getItemLayout}
+          style={styles.flatList}
+          contentContainerStyle={[styles.flatListContent, { 
             paddingTop: screenHeight / 2 - ITEM_HEIGHT / 2 + insets.top,
             paddingBottom: screenHeight / 2 - ITEM_HEIGHT / 2 + insets.bottom,
           }]}
@@ -105,11 +139,15 @@ export function RegionSelector({ visible, currentRegion, onClose, onSelect }: Re
           snapToInterval={ITEM_HEIGHT}
           snapToAlignment="center"
           decelerationRate="fast"
+          onScroll={handleScroll}
+          scrollEventThrottle={8}
           onMomentumScrollEnd={handleScroll}
           onScrollEndDrag={handleScroll}
-        >
-          {regions.map(renderRegion)}
-        </ScrollView>
+          initialNumToRender={10}
+          maxToRenderPerBatch={5}
+          windowSize={10}
+          removeClippedSubviews={true}
+        />
 
         {/* Top Gradient - Edge-to-edge behind Dynamic Island */}
         <LinearGradient
@@ -165,11 +203,11 @@ const styles = StyleSheet.create({
     zIndex: 1,
     pointerEvents: 'none',
   },
-  scrollView: {
+  flatList: {
     flex: 1,
   },
-  scrollContent: {
-    // Dynamic padding now handled inline
+  flatListContent: {
+    // Dynamic padding handled inline
   },
   regionContainer: {
     height: ITEM_HEIGHT,
@@ -177,37 +215,40 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   regionText: {
+    fontFamily: 'BricolageGrotesque_700Bold',
+    fontWeight: '700',
     textAlign: 'center',
   },
   selectedRegionText: {
-    ...Typography.selectedYearText,
+    fontSize: 60,
+    letterSpacing: 60 * -0.05, // -5% letter spacing
     color: '#000000',
+    lineHeight: 60,
   },
   unselectedRegionText: {
-    ...Typography.unselectedYearText,
-    color: 'rgba(0, 0, 0, 0.2)',
+    fontSize: 50,
+    letterSpacing: 50 * -0.05, // -5% letter spacing
+    color: '#CCCCCC',
+    lineHeight: 50,
   },
   topGradient: {
     position: 'absolute',
-    top: 0, // Edge-to-edge from very top
+    top: 0,
     left: 0,
     right: 0,
-    // height now dynamic with insets
     zIndex: 2,
     pointerEvents: 'none',
   },
   bottomGradient: {
     position: 'absolute',
-    bottom: 0, // Edge-to-edge to very bottom
+    bottom: 0,
     left: 0,
     right: 0,
-    // height now dynamic with insets
     zIndex: 2,
     pointerEvents: 'none',
   },
   cancelButton: {
     position: 'absolute',
-    // bottom now dynamic with safe area
     left: 24,
     paddingHorizontal: 24,
     paddingVertical: 12,
@@ -227,7 +268,6 @@ const styles = StyleSheet.create({
   },
   selectButton: {
     position: 'absolute',
-    // bottom now dynamic with safe area
     right: 24,
     backgroundColor: '#1A1A1A',
     paddingHorizontal: 24,

@@ -68,12 +68,56 @@ export const Typography = {
     letterSpacing: 16 * LETTER_SPACING,
   } as TextStyle,
 
+  retryButtonText: {
+    fontFamily: 'BricolageGrotesque_700Bold',
+    fontSize: 16,
+    fontWeight: '700' as const,
+    letterSpacing: 16 * LETTER_SPACING,
+  } as TextStyle,
+
   // Profile
   profileInitial: {
     fontFamily: 'BricolageGrotesque_700Bold',
     fontSize: 14,
     fontWeight: '700' as const,
     letterSpacing: 14 * LETTER_SPACING,
+  } as TextStyle,
+
+  // Loading and Error states
+  loadingText: {
+    fontFamily: 'BricolageGrotesque_700Bold',
+    fontSize: 18,
+    fontWeight: '700' as const,
+    letterSpacing: 18 * LETTER_SPACING,
+    lineHeight: 24,
+    textAlign: 'center' as const,
+  } as TextStyle,
+
+  loadingSubtext: {
+    fontFamily: 'BricolageGrotesque_500Medium',
+    fontSize: 14,
+    fontWeight: '500' as const,
+    letterSpacing: 14 * LETTER_SPACING,
+    lineHeight: 20,
+    textAlign: 'center' as const,
+  } as TextStyle,
+
+  errorTitle: {
+    fontFamily: 'BricolageGrotesque_700Bold',
+    fontSize: 20,
+    fontWeight: '700' as const,
+    letterSpacing: 20 * LETTER_SPACING,
+    lineHeight: 28,
+    textAlign: 'center' as const,
+  } as TextStyle,
+
+  errorText: {
+    fontFamily: 'BricolageGrotesque_500Medium',
+    fontSize: 16,
+    fontWeight: '500' as const,
+    letterSpacing: 16 * LETTER_SPACING,
+    lineHeight: 24,
+    textAlign: 'center' as const,
   } as TextStyle,
 
   // Year Selector

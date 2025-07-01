@@ -2,9 +2,8 @@ import { Typography } from '@/constants/Typography';
 import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState } from 'react';
 import {
-    Dimensions,
     Modal,
     ScrollView,
     StyleSheet,
@@ -14,9 +13,6 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const { height: screenHeight } = Dimensions.get('window');
-const ITEM_HEIGHT = 92;
-
 interface TopicSelectorProps {
   visible: boolean;
   currentTopic: string;
@@ -24,41 +20,42 @@ interface TopicSelectorProps {
   onSelect: (topic: string) => void;
 }
 
-const topics = ['History', 'Music', 'Science', 'Art', 'Sports'];
+interface TopicItem {
+  name: string;
+  emoji: string;
+}
+
+const topics: TopicItem[] = [
+  { name: 'History', emoji: '🏛️' },
+  { name: 'Music', emoji: '🎵' },
+  { name: 'Art', emoji: '🎨' },
+  { name: 'Science', emoji: '🧪' },
+  { name: 'Sports', emoji: '⚽' },
+  { name: 'Technology', emoji: '🔬' },
+  { name: 'Something else', emoji: '' },
+  { name: 'Else', emoji: '' },
+];
 
 export function TopicSelector({ visible, currentTopic, onClose, onSelect }: TopicSelectorProps) {
   const [selectedTopic, setSelectedTopic] = useState(currentTopic);
-  const scrollViewRef = useRef<ScrollView>(null);
   const insets = useSafeAreaInsets();
 
-  useEffect(() => {
-    if (visible) {
-      // Keep the currently selected topic when reopening (this was the main issue)
-      // Don't reset to currentTopic prop, use the state selectedTopic
-      
-      setTimeout(() => {
-        const targetTopic = selectedTopic; // Use selectedTopic, not currentTopic
-        const currentIndex = topics.indexOf(targetTopic);
-        if (currentIndex !== -1 && scrollViewRef.current) {
-          const offsetY = currentIndex * ITEM_HEIGHT;
-          scrollViewRef.current.scrollTo({ y: offsetY, animated: false });
-        }
-      }, 100);
+  const handleTopicPress = (topicName: string) => {
+    // Don't allow selection of placeholder topics
+    if (topicName === 'Something else' || topicName === 'Else') {
+      return;
     }
-  }, [visible]); // Only depend on visible, not currentTopic
-
-  const handleScroll = (event: any) => {
-    const offsetY = event.nativeEvent.contentOffset.y;
-    const index = Math.round(offsetY / ITEM_HEIGHT);
-    const topic = topics[index];
     
-    if (topic && topic !== selectedTopic) {
-      setSelectedTopic(topic);
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setSelectedTopic(topicName);
   };
 
   const handleSelect = () => {
+    // Don't allow selection of placeholder topics
+    if (selectedTopic === 'Something else' || selectedTopic === 'Else') {
+      return;
+    }
+    
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     onSelect(selectedTopic);
   };
@@ -68,19 +65,44 @@ export function TopicSelector({ visible, currentTopic, onClose, onSelect }: Topi
     onClose();
   };
 
-  const renderTopic = (topic: string, index: number) => {
-    const isSelected = topic === selectedTopic;
+  const renderTopicBox = (topic: TopicItem, index: number) => {
+    const isSelected = topic.name === selectedTopic;
+    const isPlaceholder = topic.name === 'Something else' || topic.name === 'Else';
     
     return (
-      <View key={topic} style={styles.topicContainer}>
+      <TouchableOpacity
+        key={topic.name}
+        style={[
+          styles.topicBox,
+          isSelected && !isPlaceholder && styles.selectedTopicBox,
+          isPlaceholder && styles.placeholderTopicBox
+        ]}
+        onPress={() => handleTopicPress(topic.name)}
+        activeOpacity={isPlaceholder ? 1 : 0.7}
+        disabled={isPlaceholder}
+      >
         <Text style={[
           styles.topicText,
-          isSelected ? styles.selectedTopicText : styles.unselectedTopicText
+          isPlaceholder && styles.placeholderTopicText
         ]}>
-          {topic}
+          {topic.name} {topic.emoji}
         </Text>
-      </View>
+      </TouchableOpacity>
     );
+  };
+
+  const renderGrid = () => {
+    const rows = [];
+    for (let i = 0; i < topics.length; i += 2) {
+      const row = (
+        <View key={i} style={styles.gridRow}>
+          {renderTopicBox(topics[i], i)}
+          {topics[i + 1] && renderTopicBox(topics[i + 1], i + 1)}
+        </View>
+      );
+      rows.push(row);
+    }
+    return rows;
   };
 
   return (
@@ -91,37 +113,31 @@ export function TopicSelector({ visible, currentTopic, onClose, onSelect }: Topi
       statusBarTranslucent
     >
       <View style={styles.container}>
-        {/* Center selection indicator */}
-        <View style={styles.centerIndicator} />
-        
-        <ScrollView
-          ref={scrollViewRef}
+        <ScrollView 
           style={styles.scrollView}
-          contentContainerStyle={[styles.scrollContent, {
-            paddingTop: screenHeight / 2 - ITEM_HEIGHT / 2 + insets.top,
-            paddingBottom: screenHeight / 2 - ITEM_HEIGHT / 2 + insets.bottom,
+          contentContainerStyle={[styles.scrollContent, { 
+            paddingTop: insets.top + 80, 
+            paddingBottom: insets.bottom + 120 
           }]}
           showsVerticalScrollIndicator={false}
-          snapToInterval={ITEM_HEIGHT}
-          snapToAlignment="center"
-          decelerationRate="fast"
-          onMomentumScrollEnd={handleScroll}
-          onScrollEndDrag={handleScroll}
         >
-          {topics.map(renderTopic)}
+          {/* Grid of Topics */}
+          <View style={styles.grid}>
+            {renderGrid()}
+          </View>
         </ScrollView>
 
-        {/* Top Gradient - Edge-to-edge behind Dynamic Island */}
+        {/* Top Gradient */}
         <LinearGradient
           colors={['rgba(255,255,255,1)', 'rgba(255,255,255,0)']}
-          style={[styles.topGradient, { height: 150 + insets.top }]}
+          style={[styles.topGradient, { height: 120 + insets.top }]}
           pointerEvents="none"
         />
 
-        {/* Bottom Gradient - Edge-to-edge below home indicator */}
+        {/* Bottom Gradient */}
         <LinearGradient
           colors={['rgba(255,255,255,0)', 'rgba(255,255,255,1)']}
-          style={[styles.bottomGradient, { height: 150 + insets.bottom }]}
+          style={[styles.bottomGradient, { height: 120 + insets.bottom }]}
           pointerEvents="none"
         />
 
@@ -155,59 +171,65 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     position: 'relative',
   },
-  centerIndicator: {
-    position: 'absolute',
-    top: '50%',
-    left: 0,
-    right: 0,
-    height: ITEM_HEIGHT,
-    marginTop: -ITEM_HEIGHT / 2,
-    zIndex: 1,
-    pointerEvents: 'none',
-  },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    // Dynamic padding now handled inline
+    paddingHorizontal: 24,
   },
-  topicContainer: {
-    height: ITEM_HEIGHT,
+  grid: {
+    flex: 1,
+    gap: 16,
+  },
+  gridRow: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  topicBox: {
+    flex: 1,
+    height: 120,
+    backgroundColor: '#F5F5F5',
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 3,
+    borderColor: 'transparent',
+  },
+  selectedTopicBox: {
+    borderColor: '#000000',
+  },
+  placeholderTopicBox: {
+    backgroundColor: '#F5F5F5',
+    opacity: 0.6,
   },
   topicText: {
+    ...Typography.heroText,
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1A1A1A',
     textAlign: 'center',
   },
-  selectedTopicText: {
-    ...Typography.selectedYearText,
-    color: '#000000',
-  },
-  unselectedTopicText: {
-    ...Typography.unselectedYearText,
-    color: 'rgba(0, 0, 0, 0.2)',
+  placeholderTopicText: {
+    color: '#999999',
   },
   topGradient: {
     position: 'absolute',
-    top: 0, // Edge-to-edge from very top
+    top: 0,
     left: 0,
     right: 0,
-    // height now dynamic with insets
     zIndex: 2,
     pointerEvents: 'none',
   },
   bottomGradient: {
     position: 'absolute',
-    bottom: 0, // Edge-to-edge to very bottom
+    bottom: 0,
     left: 0,
     right: 0,
-    // height now dynamic with insets
     zIndex: 2,
     pointerEvents: 'none',
   },
   cancelButton: {
     position: 'absolute',
-    // bottom now dynamic with safe area
     left: 24,
     paddingHorizontal: 24,
     paddingVertical: 12,
@@ -227,7 +249,6 @@ const styles = StyleSheet.create({
   },
   selectButton: {
     position: 'absolute',
-    // bottom now dynamic with safe area
     right: 24,
     backgroundColor: '#1A1A1A',
     paddingHorizontal: 24,
