@@ -3,6 +3,7 @@ import { TopicSelector } from '@/components/TopicSelector';
 import { YearSelector } from '@/components/YearSelector';
 import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState } from 'react';
 import {
     Dimensions,
@@ -125,10 +126,10 @@ export default function ContentScreen() {
         {/* Full Width Hero Image - covers from very top edge-to-edge */}
         {primaryEvent && (
           <View style={styles.heroContainer}>
-            <Image source={{ uri: primaryEvent.imageUrl }} style={[styles.heroImage, { height: 450 + insets.top }]} />
+            <Image source={{ uri: primaryEvent.imageUrl }} style={[styles.heroImage, { height: screenHeight * 0.35 + insets.top }]} />
             
             {/* Content over image with safe area consideration */}
-            <View style={[styles.heroContent, { paddingTop: 24 + insets.top }]}>
+            <View style={styles.heroContent}>
               <Text style={styles.heroTitle}>{primaryEvent.title}</Text>
               <Text style={styles.heroText}>{primaryEvent.content}</Text>
             </View>
@@ -173,8 +174,15 @@ export default function ContentScreen() {
         <View style={styles.bottomSpacing} />
       </ScrollView>
 
+      {/* Bottom Gradient Background - Edge-to-edge below home indicator */}
+      <LinearGradient
+        colors={['rgba(255,255,255,0)', 'rgba(255,255,255,0.95)', '#FFFFFF']}
+        style={styles.bottomGradient}
+        pointerEvents="none"
+      />
+
       {/* Horizontal Floating Pill Buttons with Haptics - respecting safe areas */}
-      <View style={[styles.floatingButtons, { bottom: 40 + insets.bottom }]}>
+      <View style={[styles.floatingButtons, { bottom: 10 + insets.bottom }]}>
         <TouchableOpacity
           style={styles.pillButton}
           onPress={() => {
@@ -274,7 +282,7 @@ const styles = StyleSheet.create({
   },
   heroContent: {
     backgroundColor: '#FFFFFF',
-    marginTop: -20,
+    marginTop: -50, // Reduced gap between image and content
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     paddingHorizontal: 24,
@@ -356,6 +364,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'flex-start',
     gap: 12,
+    zIndex: 20, // Above gradient
   },
   pillButton: {
     backgroundColor: '#1A1A1A',
@@ -375,5 +384,13 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  bottomGradient: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0, // Edge-to-edge to very bottom
+    height: 150 + 34, // Extra height to cover home indicator area + gradient
+    zIndex: 10, // Below pills (pills have higher zIndex)
   },
 }); 
