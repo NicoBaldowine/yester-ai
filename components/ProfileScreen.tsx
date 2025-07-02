@@ -2,6 +2,15 @@ import { Typography } from '@/constants/Typography';
 import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
+import {
+    BarChart3,
+    BookOpen,
+    ChevronRight,
+    Heart,
+    Lightbulb,
+    Settings,
+    X
+} from 'lucide-react-native';
 import React from 'react';
 import {
     Modal,
@@ -66,33 +75,43 @@ export function ProfileScreen({ visible, onClose }: ProfileScreenProps) {
             {/* Menu Items */}
             <View style={styles.menuContainer}>
               <TouchableOpacity style={styles.menuItem} activeOpacity={0.7}>
-                <Text style={styles.menuItemIcon}>⚙️</Text>
+                <View style={styles.menuItemIconContainer}>
+                  <Settings size={20} color="#666666" />
+                </View>
                 <Text style={styles.menuItemText}>Settings</Text>
-                <Text style={styles.menuItemChevron}>›</Text>
+                <ChevronRight size={20} color="#C7C7CC" />
               </TouchableOpacity>
               
               <TouchableOpacity style={styles.menuItem} activeOpacity={0.7}>
-                <Text style={styles.menuItemIcon}>📖</Text>
+                <View style={styles.menuItemIconContainer}>
+                  <BookOpen size={20} color="#666666" />
+                </View>
                 <Text style={styles.menuItemText}>History</Text>
-                <Text style={styles.menuItemChevron}>›</Text>
+                <ChevronRight size={20} color="#C7C7CC" />
               </TouchableOpacity>
               
               <TouchableOpacity style={styles.menuItem} activeOpacity={0.7}>
-                <Text style={styles.menuItemIcon}>❤️</Text>
+                <View style={styles.menuItemIconContainer}>
+                  <Heart size={20} color="#666666" />
+                </View>
                 <Text style={styles.menuItemText}>Favorites</Text>
-                <Text style={styles.menuItemChevron}>›</Text>
+                <ChevronRight size={20} color="#C7C7CC" />
               </TouchableOpacity>
               
               <TouchableOpacity style={styles.menuItem} activeOpacity={0.7}>
-                <Text style={styles.menuItemIcon}>📊</Text>
+                <View style={styles.menuItemIconContainer}>
+                  <BarChart3 size={20} color="#666666" />
+                </View>
                 <Text style={styles.menuItemText}>Statistics</Text>
-                <Text style={styles.menuItemChevron}>›</Text>
+                <ChevronRight size={20} color="#C7C7CC" />
               </TouchableOpacity>
               
               <TouchableOpacity style={styles.menuItem} activeOpacity={0.7}>
-                <Text style={styles.menuItemIcon}>💡</Text>
+                <View style={styles.menuItemIconContainer}>
+                  <Lightbulb size={20} color="#666666" />
+                </View>
                 <Text style={styles.menuItemText}>About Yester</Text>
-                <Text style={styles.menuItemChevron}>›</Text>
+                <ChevronRight size={20} color="#C7C7CC" />
               </TouchableOpacity>
             </View>
 
@@ -127,7 +146,7 @@ export function ProfileScreen({ visible, onClose }: ProfileScreenProps) {
             onPress={handleClose}
             activeOpacity={0.8}
           >
-            <Text style={styles.closeButtonText}>✕</Text>
+            <X size={16} color="#1A1A1A" />
           </TouchableOpacity>
         </BlurView>
       </View>
@@ -217,19 +236,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8F9FA',
     borderRadius: 12,
   },
-  menuItemIcon: {
-    fontSize: 20,
+  menuItemIconContainer: {
     marginRight: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   menuItemText: {
     ...Typography.heroText,
     flex: 1,
     color: '#1A1A1A',
-  },
-  menuItemChevron: {
-    ...Typography.heroText,
-    fontSize: 20,
-    color: '#C7C7CC',
+    fontWeight: 'bold',
   },
   footer: {
     alignItems: 'center',
@@ -273,10 +289,5 @@ const styles = StyleSheet.create({
     height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  closeButtonText: {
-    ...Typography.cancelButtonText,
-    fontSize: 16,
-    color: '#1A1A1A',
   },
 }); 

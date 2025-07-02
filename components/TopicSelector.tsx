@@ -2,7 +2,17 @@ import { Typography } from '@/constants/Typography';
 import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useState } from 'react';
+import {
+    BookOpen,
+    Cpu,
+    Landmark,
+    Microscope,
+    Music,
+    Palette,
+    Scale,
+    Trophy
+} from 'lucide-react-native';
+import React, { useEffect, useState } from 'react';
 import {
     Modal,
     ScrollView,
@@ -22,40 +32,37 @@ interface TopicSelectorProps {
 
 interface TopicItem {
   name: string;
-  emoji: string;
+  icon: React.ComponentType<any>;
 }
 
 const topics: TopicItem[] = [
-  { name: 'History', emoji: '🏛️' },
-  { name: 'Music', emoji: '🎵' },
-  { name: 'Art', emoji: '🎨' },
-  { name: 'Science', emoji: '🧪' },
-  { name: 'Sports', emoji: '⚽' },
-  { name: 'Technology', emoji: '🔬' },
-  { name: 'Something else', emoji: '' },
-  { name: 'Else', emoji: '' },
+  { name: 'History', icon: Landmark },
+  { name: 'Music', icon: Music },
+  { name: 'Art', icon: Palette },
+  { name: 'Science', icon: Microscope },
+  { name: 'Sports', icon: Trophy },
+  { name: 'Technology', icon: Cpu },
+  { name: 'Politics', icon: Scale },
+  { name: 'Literature', icon: BookOpen },
 ];
 
 export function TopicSelector({ visible, currentTopic, onClose, onSelect }: TopicSelectorProps) {
   const [selectedTopic, setSelectedTopic] = useState(currentTopic);
   const insets = useSafeAreaInsets();
 
-  const handleTopicPress = (topicName: string) => {
-    // Don't allow selection of placeholder topics
-    if (topicName === 'Something else' || topicName === 'Else') {
-      return;
+  // Reset selected topic when modal opens
+  useEffect(() => {
+    if (visible) {
+      setSelectedTopic(currentTopic);
     }
-    
+  }, [visible, currentTopic]);
+
+  const handleTopicPress = (topicName: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setSelectedTopic(topicName);
   };
 
   const handleSelect = () => {
-    // Don't allow selection of placeholder topics
-    if (selectedTopic === 'Something else' || selectedTopic === 'Else') {
-      return;
-    }
-    
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     onSelect(selectedTopic);
   };
@@ -67,26 +74,30 @@ export function TopicSelector({ visible, currentTopic, onClose, onSelect }: Topi
 
   const renderTopicBox = (topic: TopicItem, index: number) => {
     const isSelected = topic.name === selectedTopic;
-    const isPlaceholder = topic.name === 'Something else' || topic.name === 'Else';
+    const IconComponent = topic.icon;
     
     return (
       <TouchableOpacity
         key={topic.name}
         style={[
           styles.topicBox,
-          isSelected && !isPlaceholder && styles.selectedTopicBox,
-          isPlaceholder && styles.placeholderTopicBox
+          isSelected && styles.selectedTopicBox
         ]}
         onPress={() => handleTopicPress(topic.name)}
-        activeOpacity={isPlaceholder ? 1 : 0.7}
-        disabled={isPlaceholder}
+        activeOpacity={0.7}
       >
-        <Text style={[
-          styles.topicText,
-          isPlaceholder && styles.placeholderTopicText
-        ]}>
-          {topic.name} {topic.emoji}
-        </Text>
+        <View style={styles.topicContent}>
+          <IconComponent 
+            size={32} 
+            color={isSelected ? '#000000' : '#666666'} 
+          />
+          <Text style={[
+            styles.topicText,
+            isSelected && styles.selectedTopicText
+          ]}>
+            {topic.name}
+          </Text>
+        </View>
       </TouchableOpacity>
     );
   };
@@ -197,20 +208,22 @@ const styles = StyleSheet.create({
   },
   selectedTopicBox: {
     borderColor: '#000000',
+    borderWidth: 2,
   },
-  placeholderTopicBox: {
-    backgroundColor: '#F5F5F5',
-    opacity: 0.6,
+  topicContent: {
+    alignItems: 'center',
+    gap: 8,
   },
   topicText: {
-    ...Typography.heroText,
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1A1A1A',
+    fontFamily: 'BricolageGrotesque_700Bold',
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#666666',
     textAlign: 'center',
+    letterSpacing: 16 * -0.05,
   },
-  placeholderTopicText: {
-    color: '#999999',
+  selectedTopicText: {
+    color: '#000000',
   },
   topGradient: {
     position: 'absolute',

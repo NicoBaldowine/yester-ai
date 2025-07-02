@@ -61,9 +61,11 @@ export function RegionSelector({ visible, currentRegion, onClose, onSelect }: Re
 
   useEffect(() => {
     if (visible) {
-      // Keep the currently selected region when reopening
+      // Reset to current region when modal opens
+      setSelectedRegion(currentRegion);
+      
       setTimeout(() => {
-        const targetRegion = selectedRegion;
+        const targetRegion = currentRegion; // Use currentRegion, not selectedRegion
         const currentIndex = regions.findIndex(item => item.name === targetRegion);
         if (currentIndex !== -1 && flatListRef.current) {
           flatListRef.current.scrollToIndex({
@@ -73,7 +75,7 @@ export function RegionSelector({ visible, currentRegion, onClose, onSelect }: Re
         }
       }, 100);
     }
-  }, [visible]);
+  }, [visible, currentRegion]); // Add currentRegion to dependencies
 
   const handleScroll = (event: any) => {
     const offsetY = event.nativeEvent.contentOffset.y;

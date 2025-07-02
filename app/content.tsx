@@ -1,9 +1,11 @@
 import { ProfileScreen } from '@/components/ProfileScreen';
 import { RegionSelector } from '@/components/RegionSelector';
+import { SkeletonLoader } from '@/components/SkeletonLoader';
 import { TopicSelector } from '@/components/TopicSelector';
 import { YearSelector } from '@/components/YearSelector';
 import { Typography } from '@/constants/Typography';
 import { useHistoricalContent } from '@/hooks/useHistoricalContent';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -22,54 +24,122 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { height: screenHeight } = Dimensions.get('window');
 
+// Storage keys para persistencia
+const STORAGE_KEYS = {
+  YEAR: 'yester-ai-last-year',
+  REGION: 'yester-ai-last-region', 
+  TOPIC: 'yester-ai-last-topic',
+};
+
+// Función para cargar estado persistido
+const loadPersistedState = async () => {
+  try {
+    const [savedYear, savedRegion, savedTopic] = await Promise.all([
+      AsyncStorage.getItem(STORAGE_KEYS.YEAR),
+      AsyncStorage.getItem(STORAGE_KEYS.REGION),
+      AsyncStorage.getItem(STORAGE_KEYS.TOPIC),
+    ]);
+
+    return {
+      year: savedYear ? parseInt(savedYear, 10) : 2024, // Default a 2024 en lugar de 2025
+      region: savedRegion || 'Americas',
+      topic: savedTopic || 'History',
+    };
+  } catch (error) {
+    console.warn('Error loading persisted state:', error);
+    return {
+      year: 2024, // Default a 2024
+      region: 'Americas', 
+      topic: 'History',
+    };
+  }
+};
+
+// Función para guardar estado
+const saveState = async (key: string, value: string | number) => {
+  try {
+    await AsyncStorage.setItem(key, value.toString());
+  } catch (error) {
+    console.warn('Error saving state:', error);
+  }
+};
+
 export default function ContentScreen() {
   const insets = useSafeAreaInsets();
   
-  // Default values for home screen
-  const [year, setYear] = useState(1990);
-  const [topic, setTopic] = useState('History');
+  // Estados iniciales - se cargarán desde AsyncStorage
+  const [year, setYear] = useState<number>(2024);
   const [region, setRegion] = useState('Americas');
+  const [topic, setTopic] = useState('History');
+  const [isStateLoaded, setIsStateLoaded] = useState(false);
 
   const [showYearSelector, setShowYearSelector] = useState(false);
   const [showTopicSelector, setShowTopicSelector] = useState(false);
   const [showRegionSelector, setShowRegionSelector] = useState(false);
   const [showProfileScreen, setShowProfileScreen] = useState(false);
 
-  // AI Content Hook - Reemplaza los datos dummy
-  const { events, isLoading, error, generateContent, clearError, cancelGeneration } = useHistoricalContent();
+  // Hook para manejar el contenido histórico
+  const { 
+    events, 
+    isLoading, 
+    showSkeleton,
+    error, 
+    generateContent, 
+    clearError,
+    cancelGeneration,
+    cacheStats 
+  } = useHistoricalContent();
 
-  // Generar contenido cuando cambien los parámetros (SIN generateContent en dependencias)
+  // Cargar estado persistido al inicializar
   useEffect(() => {
-    generateContent({ year, region, topic });
-  }, [year, region, topic]); // Solo los parámetros como dependencias
+    const loadInitialState = async () => {
+      const persistedState = await loadPersistedState();
+      setYear(persistedState.year);
+      setRegion(persistedState.region);
+      setTopic(persistedState.topic);
+      setIsStateLoaded(true);
+    };
+    
+    loadInitialState();
+  }, []);
+
+  // Generar contenido cuando cambien los parámetros (solo después de cargar estado)
+  useEffect(() => {
+    if (!isStateLoaded) return; // Esperar a que se cargue el estado inicial
+    
+    generateContent({
+      year,
+      region,
+      topic,
+    });
+  }, [year, region, topic, isStateLoaded]); // Agregamos isStateLoaded a dependencias
 
   const primaryEvent = events.find(e => e.isPrimary);
   const secondaryEvents = events.filter(e => !e.isPrimary);
 
+  // Handlers actualizados con persistencia
   const handleYearChange = (direction: 'next' | 'previous') => {
     const newYear = direction === 'next' ? year + 1 : year - 1;
-    if (newYear >= 0 && newYear <= 2025) {
-      setYear(newYear);
-      // El useEffect se encargará de generar nuevo contenido
-    }
+    setYear(newYear);
+    saveState(STORAGE_KEYS.YEAR, newYear);
   };
 
   const handleYearSelect = (newYear: number) => {
     setYear(newYear);
+    saveState(STORAGE_KEYS.YEAR, newYear);
     setShowYearSelector(false);
-    // El useEffect se encargará de generar nuevo contenido
   };
 
   const handleTopicChange = (newTopic: string) => {
     setTopic(newTopic);
+    saveState(STORAGE_KEYS.TOPIC, newTopic);
     setShowTopicSelector(false);
-    // El useEffect se encargará de generar nuevo contenido
   };
 
   const handleRegionChange = (newRegion: string) => {
     setRegion(newRegion);
+    saveState(STORAGE_KEYS.REGION, newRegion);
     setShowRegionSelector(false);
-    // El useEffect se encargará de generar nuevo contenido
   };
 
   const handleProfilePress = () => {
@@ -155,50 +225,74 @@ export default function ContentScreen() {
         </TouchableOpacity>
       </BlurView>
       
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {/* Error Message */}
-        <ErrorMessage />
+      {/* Mostrar SkeletonLoader cuando showSkeleton es true */}
+      {showSkeleton ? (
+        <SkeletonLoader />
+      ) : isLoading ? (
+        <LoadingScreen />
+      ) : (
+        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+          {/* Error Message */}
+          <ErrorMessage />
 
-        {/* Full Width Hero Image - covers from very top edge-to-edge */}
-        {primaryEvent && (
-          <View style={styles.heroContainer}>
-            <Image source={{ uri: primaryEvent.imageUrl }} style={[styles.heroImage, { height: screenHeight * 0.35 + insets.top }]} />
-            
-            {/* Content over image with safe area consideration */}
-            <View style={styles.heroContent}>
-              <Text style={styles.heroTitle}>{primaryEvent.title}</Text>
-              <Text style={styles.heroText}>{primaryEvent.content}</Text>
+          {/* Full Width Hero Image - covers from very top edge-to-edge */}
+          {primaryEvent && (
+            <View style={styles.heroContainer}>
+              <Image source={{ uri: primaryEvent.imageUrl }} style={[styles.heroImage, { height: screenHeight * 0.35 + insets.top }]} />
+              
+              {/* Content over image with safe area consideration */}
+              <View style={styles.heroContent}>
+                <Text style={styles.heroTitle}>{primaryEvent.title}</Text>
+                <Text style={styles.heroText}>{primaryEvent.content}</Text>
+              </View>
             </View>
-          </View>
-        )}
+          )}
 
-        {/* Secondary Events */}
-        <View style={styles.secondaryEventsContainer}>
-          {secondaryEvents.map((event, index) => (
-            <View key={event.id} style={styles.secondaryEventContainer}>
-              <Text style={styles.secondaryTitle}>{event.title}</Text>
-              <Image source={{ uri: event.imageUrl }} style={styles.secondaryImage} />
-              <Text style={styles.secondaryText}>{event.content}</Text>
+          {/* Evento principal */}
+          {primaryEvent && (
+            <View>
+              {/* Hero event ya se muestra arriba en heroContainer */}
             </View>
-          ))}
-        </View>
+          )}
 
-        {/* Navigation Buttons - Glass Pills */}
-        <View style={styles.navigationContainer}>
-          <BlurView intensity={20} tint="light" style={[styles.navPillButton, (year <= 0 || isLoading) && styles.navPillButtonDisabled]}>
-            <TouchableOpacity
-              style={styles.navPillButtonTouchable}
-              onPress={() => handleYearChange('previous')}
-              disabled={year <= 0 || isLoading}
-              activeOpacity={0.8}
-            >
-              <Text style={[styles.navPillButtonText, (year <= 0 || isLoading) && styles.navPillButtonTextDisabled]}>
-                Previous Year
+          {/* Eventos secundarios */}
+          {secondaryEvents.length > 0 && (
+            <View style={styles.secondaryEventsContainer}>
+              {secondaryEvents.map((event, index) => (
+                <View key={index} style={styles.secondaryEventContainer}>
+                  <Text style={styles.secondaryTitle}>{event.title}</Text>
+                  <Image source={{ uri: event.imageUrl }} style={styles.secondaryImage} />
+                  <Text style={styles.secondaryText}>{event.content}</Text>
+                </View>
+              ))}
+            </View>
+          )}
+
+          {/* Mensaje cuando no hay eventos */}
+          {events.length === 0 && !isLoading && !showSkeleton && (
+            <View style={{ padding: 24, alignItems: 'center' }}>
+              <Text style={{ fontSize: 18, color: '#666', textAlign: 'center' }}>
+                No hay eventos disponibles para {year} en {region} sobre {topic}
               </Text>
-            </TouchableOpacity>
-          </BlurView>
-          
-          <BlurView intensity={20} tint="light" style={[styles.navPillButton, (year >= 2025 || isLoading) && styles.navPillButtonDisabled]}>
+            </View>
+          )}
+
+          {/* Navigation Buttons - Glass Pills */}
+          <View style={styles.navigationContainer}>
+            <BlurView intensity={20} tint="light" style={[styles.navPillButton, (year <= 0 || isLoading) && styles.navPillButtonDisabled]}>
+              <TouchableOpacity
+                style={styles.navPillButtonTouchable}
+                onPress={() => handleYearChange('previous')}
+                disabled={year <= 0 || isLoading}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.navPillButtonText, (year <= 0 || isLoading) && styles.navPillButtonTextDisabled]}>
+                  Previous Year
+                </Text>
+              </TouchableOpacity>
+            </BlurView>
+            
+                      <BlurView intensity={20} tint="light" style={[styles.navPillButton, (year >= 2025 || isLoading) && styles.navPillButtonDisabled]}>
             <TouchableOpacity
               style={styles.navPillButtonTouchable}
               onPress={() => handleYearChange('next')}
@@ -210,14 +304,12 @@ export default function ContentScreen() {
               </Text>
             </TouchableOpacity>
           </BlurView>
-        </View>
+          </View>
 
-        {/* Bottom spacing for floating buttons */}
-        <View style={styles.bottomSpacing} />
-      </ScrollView>
-
-      {/* Loading Screen */}
-      {isLoading && <LoadingScreen />}
+          {/* Bottom spacing for floating buttons */}
+          <View style={styles.bottomSpacing} />
+        </ScrollView>
+      )}
 
       {/* Bottom Gradient Background - Edge-to-edge below home indicator */}
       <LinearGradient
@@ -544,4 +636,5 @@ const styles = StyleSheet.create({
     ...Typography.retryButtonText,
     color: '#FFFFFF',
   },
+
 }); 

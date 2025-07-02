@@ -49,11 +49,11 @@ export function YearSelector({ visible, currentYear, onClose, onSelect }: YearSe
 
   useEffect(() => {
     if (visible) {
-      // Keep the currently selected year when reopening (this was the main issue)
-      // Don't reset to currentYear prop, use the state selectedYear
+      // Reset to current year when modal opens
+      setSelectedYear(currentYear);
       
       setTimeout(() => {
-        const targetYear = selectedYear; // Use selectedYear, not currentYear
+        const targetYear = currentYear; // Use currentYear, not selectedYear
         const currentIndex = years.findIndex(item => item.year === targetYear);
         if (currentIndex !== -1 && flatListRef.current) {
           flatListRef.current.scrollToIndex({
@@ -63,7 +63,7 @@ export function YearSelector({ visible, currentYear, onClose, onSelect }: YearSe
         }
       }, 100);
     }
-  }, [visible]); // Only depend on visible, not currentYear
+  }, [visible, currentYear]); // Add currentYear to dependencies
 
   const handleScroll = (event: any) => {
     const offsetY = event.nativeEvent.contentOffset.y;
