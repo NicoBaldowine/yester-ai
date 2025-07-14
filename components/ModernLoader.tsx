@@ -8,107 +8,75 @@ interface ModernLoaderProps {
 }
 
 export function ModernLoader({ size = 64, color = '#000000', style }: ModernLoaderProps) {
-  const spinValue = useRef(new Animated.Value(0)).current;
-  const scaleValue = useRef(new Animated.Value(0.8)).current;
+  const animatedValues = useRef(
+    Array.from({ length: 5 }, () => new Animated.Value(0))
+  ).current;
   
   useEffect(() => {
-    // Rotation animation
-    const spinAnimation = Animated.loop(
-      Animated.timing(spinValue, {
-        toValue: 1,
-        duration: 1200,
-        easing: Easing.linear,
-        useNativeDriver: true,
-      })
-    );
+    const animations = animatedValues.map((animatedValue, index) => {
+      return Animated.loop(
+        Animated.sequence([
+          Animated.delay(index * 100), // Stagger the animations
+          Animated.timing(animatedValue, {
+            toValue: 1,
+            duration: 600,
+            easing: Easing.bezier(0.4, 0.0, 0.2, 1),
+            useNativeDriver: true,
+          }),
+          Animated.timing(animatedValue, {
+            toValue: 0,
+            duration: 600,
+            easing: Easing.bezier(0.4, 0.0, 0.2, 1),
+            useNativeDriver: true,
+          }),
+        ])
+      );
+    });
     
-    // Scale pulse animation
-    const scaleAnimation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(scaleValue, {
-          toValue: 1,
-          duration: 600,
-          easing: Easing.bezier(0.4, 0.0, 0.2, 1),
-          useNativeDriver: true,
-        }),
-        Animated.timing(scaleValue, {
-          toValue: 0.8,
-          duration: 600,
-          easing: Easing.bezier(0.4, 0.0, 0.2, 1),
-          useNativeDriver: true,
-        }),
-      ])
-    );
-    
-    spinAnimation.start();
-    scaleAnimation.start();
+    // Start all animations
+    animations.forEach(animation => animation.start());
     
     return () => {
-      spinAnimation.stop();
-      scaleAnimation.stop();
+      animations.forEach(animation => animation.stop());
     };
   }, []);
   
-  const spin = spinValue.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
-  });
-  
-  const dotSize = size * 0.15;
-  const radius = size * 0.35;
+  const barWidth = size * 0.08;
+  const barHeight = size * 0.4;
+  const spacing = size * 0.04;
   
   return (
     <View style={[styles.container, { width: size, height: size }, style]}>
-      <Animated.View 
-        style={[
-          styles.loader,
-          {
-            width: size,
-            height: size,
-            transform: [{ rotate: spin }, { scale: scaleValue }],
-          },
-        ]}
-      >
-        {/* Create 8 dots in a circle */}
-        {Array.from({ length: 8 }).map((_, index) => {
-          const angle = (index * 45) * Math.PI / 180;
-          const x = Math.cos(angle) * radius;
-          const y = Math.sin(angle) * radius;
+      <View style={styles.barsContainer}>
+        {animatedValues.map((animatedValue, index) => {
+          const scale = animatedValue.interpolate({
+            inputRange: [0, 1],
+            outputRange: [0.4, 1],
+          });
+          
+          const opacity = animatedValue.interpolate({
+            inputRange: [0, 1],
+            outputRange: [0.3, 1],
+          });
           
           return (
-            <View
+            <Animated.View
               key={index}
               style={[
-                styles.dot,
+                styles.bar,
                 {
-                  width: dotSize,
-                  height: dotSize,
-                  borderRadius: dotSize / 2,
+                  width: barWidth,
+                  height: barHeight,
                   backgroundColor: color,
-                  opacity: 0.2 + (index * 0.1),
-                  transform: [
-                    { translateX: x },
-                    { translateY: y },
-                  ],
+                  marginHorizontal: spacing / 2,
+                  transform: [{ scaleY: scale }],
+                  opacity: opacity,
                 },
               ]}
             />
           );
         })}
-        
-        {/* Center dot */}
-        <View
-          style={[
-            styles.centerDot,
-            {
-              width: dotSize * 0.8,
-              height: dotSize * 0.8,
-              borderRadius: dotSize * 0.4,
-              backgroundColor: color,
-            },
-          ]}
-        />
-      </Animated.View>
+      </View>
     </View>
   );
 }
@@ -118,15 +86,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  loader: {
-    justifyContent: 'center',
+  barsContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  dot: {
-    position: 'absolute',
-  },
-  centerDot: {
-    position: 'absolute',
-    opacity: 0.6,
+  bar: {
+    borderRadius: 2,
   },
 }); 
