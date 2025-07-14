@@ -1,5 +1,4 @@
 import { Typography } from '@/constants/Typography';
-import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
@@ -139,16 +138,16 @@ export function ProfileScreen({ visible, onClose }: ProfileScreenProps) {
           pointerEvents="none"
         />
 
-        {/* Close Button */}
-        <BlurView intensity={20} tint="light" style={[styles.closeButton, { top: 40 + insets.top }]}>
+        {/* Close Button with X icon - Same style as selectors */}
+        <View style={[styles.closeButton, { top: insets.top + 10 }]}>
           <TouchableOpacity
             style={styles.closeButtonTouchable}
             onPress={handleClose}
             activeOpacity={0.8}
           >
-            <X size={16} color="#1A1A1A" />
+            <X size={20} color="#1A1A1A" />
           </TouchableOpacity>
-        </BlurView>
+        </View>
       </View>
     </Modal>
   );
@@ -277,12 +276,13 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     position: 'absolute',
-    right: 24,
+    right: 20,
     width: 36,
     height: 36,
     borderRadius: 18,
+    backgroundColor: 'rgba(0, 0, 0, 0.07)',
     overflow: 'hidden',
-    zIndex: 10,
+    zIndex: 100,
   },
   closeButtonTouchable: {
     width: '100%',

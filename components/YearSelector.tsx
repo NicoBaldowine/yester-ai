@@ -166,7 +166,7 @@ export function YearSelector({ visible, currentYear, onClose, onSelect }: YearSe
 
         {/* Floating Select Button - Right */}
         <TouchableOpacity
-          style={[styles.selectButton, { bottom: 40 + insets.bottom }]}
+          style={[styles.selectButton, { bottom: 10 + insets.bottom }]}
           onPress={handleSelect}
           activeOpacity={0.8}
         >
