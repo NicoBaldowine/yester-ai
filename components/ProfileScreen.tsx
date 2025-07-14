@@ -3,12 +3,12 @@ import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
-    BarChart3,
-    BookOpen,
     ChevronRight,
-    Heart,
-    Lightbulb,
-    Settings,
+    HelpCircle,
+    Info,
+    LogOut,
+    MessageCircle,
+    User,
     X
 } from 'lucide-react-native';
 import React from 'react';
@@ -76,41 +76,41 @@ export function ProfileScreen({ visible, onClose }: ProfileScreenProps) {
             <View style={styles.menuContainer}>
               <TouchableOpacity style={styles.menuItem} activeOpacity={0.7}>
                 <View style={styles.menuItemIconContainer}>
-                  <Settings size={20} color="#666666" />
+                  <User size={20} color="#666666" />
                 </View>
-                <Text style={styles.menuItemText}>Settings</Text>
+                <Text style={styles.menuItemText}>Profile</Text>
                 <ChevronRight size={20} color="#C7C7CC" />
               </TouchableOpacity>
               
               <TouchableOpacity style={styles.menuItem} activeOpacity={0.7}>
                 <View style={styles.menuItemIconContainer}>
-                  <BookOpen size={20} color="#666666" />
+                  <MessageCircle size={20} color="#666666" />
                 </View>
-                <Text style={styles.menuItemText}>History</Text>
+                <Text style={styles.menuItemText}>Feedback</Text>
                 <ChevronRight size={20} color="#C7C7CC" />
               </TouchableOpacity>
               
               <TouchableOpacity style={styles.menuItem} activeOpacity={0.7}>
                 <View style={styles.menuItemIconContainer}>
-                  <Heart size={20} color="#666666" />
+                  <HelpCircle size={20} color="#666666" />
                 </View>
-                <Text style={styles.menuItemText}>Favorites</Text>
+                <Text style={styles.menuItemText}>Help</Text>
                 <ChevronRight size={20} color="#C7C7CC" />
               </TouchableOpacity>
               
               <TouchableOpacity style={styles.menuItem} activeOpacity={0.7}>
                 <View style={styles.menuItemIconContainer}>
-                  <BarChart3 size={20} color="#666666" />
+                  <Info size={20} color="#666666" />
                 </View>
-                <Text style={styles.menuItemText}>Statistics</Text>
+                <Text style={styles.menuItemText}>About Yester.ai</Text>
                 <ChevronRight size={20} color="#C7C7CC" />
               </TouchableOpacity>
               
               <TouchableOpacity style={styles.menuItem} activeOpacity={0.7}>
                 <View style={styles.menuItemIconContainer}>
-                  <Lightbulb size={20} color="#666666" />
+                  <LogOut size={20} color="#FF3B30" />
                 </View>
-                <Text style={styles.menuItemText}>About Yester</Text>
+                <Text style={[styles.menuItemText, { color: '#FF3B30' }]}>Log out</Text>
                 <ChevronRight size={20} color="#C7C7CC" />
               </TouchableOpacity>
             </View>
