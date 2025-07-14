@@ -14,6 +14,7 @@ export interface UseHistoricalContentResult {
   clearError: () => void;
   cancelGeneration: () => void;
   cacheStats?: { local: number; global: number; totalUsage: number };
+  fallbackParams?: GenerationParams;
 }
 
 // Cache local para evitar regenerar el mismo contenido
@@ -56,6 +57,7 @@ export function useHistoricalContent(): UseHistoricalContentResult {
   const [cacheLoaded, setCacheLoaded] = useState(false);
   const [cacheStats, setCacheStats] = useState<{ local: number; global: number; totalUsage: number }>();
   const [initialParams, setInitialParams] = useState<GenerationParams | null>(null);
+  const [fallbackParams, setFallbackParams] = useState<GenerationParams | undefined>(undefined);
   
   // Crear instancia del servicio de Gemini (solo una vez)
   const geminiService = useRef(createGeminiService(Config.GEMINI_API_KEY));
@@ -112,8 +114,43 @@ export function useHistoricalContent(): UseHistoricalContentResult {
         console.log('⚡ Cargando contenido cacheado automáticamente para:', cacheKey);
         setEventsWithLogging(cachedEvents);
         setLastParams(cacheKey);
+        setFallbackParams(undefined); // Limpiar fallback params cuando se encuentra contenido exacto
       } else {
         console.log('❌ No hay contenido cacheado para:', cacheKey);
+        
+        // FALLBACK: Buscar el contenido cacheado más reciente
+        const availableKeys = Array.from(contentCache.keys());
+        if (availableKeys.length > 0) {
+          // Ordenar por año (más reciente primero) y tomar el primero
+          const sortedKeys = availableKeys.sort((a, b) => {
+            const yearA = parseInt(a.split('-')[0]);
+            const yearB = parseInt(b.split('-')[0]);
+            return yearB - yearA; // Descendente
+          });
+          
+          const fallbackKey = sortedKeys[0];
+          const fallbackEvents = contentCache.get(fallbackKey);
+          
+          if (fallbackEvents && fallbackEvents.length > 0) {
+            console.log('🔄 Usando contenido cacheado más reciente como fallback:', fallbackKey);
+            setEventsWithLogging(fallbackEvents);
+            setLastParams(fallbackKey);
+            
+            // Actualizar los parámetros de la UI para que coincidan con el fallback
+            const [fallbackYear, fallbackRegion, fallbackTopic] = fallbackKey.split('-');
+            console.log('🔄 Actualizando parámetros UI a:', { year: fallbackYear, region: fallbackRegion, topic: fallbackTopic });
+            
+            // Setear los parámetros fallback para que content.tsx los use
+            setFallbackParams({
+              year: parseInt(fallbackYear),
+              region: fallbackRegion,
+              topic: fallbackTopic
+            });
+            
+            // Notificar que estamos usando fallback content
+            // (esto podría ser útil para mostrar un toast o algo similar)
+          }
+        }
       }
     }
   }, [cacheLoaded, initialParams, setEventsWithLogging]);
@@ -369,6 +406,7 @@ export function useHistoricalContent(): UseHistoricalContentResult {
     clearError,
     cancelGeneration,
     cacheStats,
+    fallbackParams,
   };
 }
 

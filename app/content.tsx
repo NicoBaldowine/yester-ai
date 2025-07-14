@@ -87,7 +87,8 @@ export default function ContentScreen() {
     generateContent, 
     clearError,
     cancelGeneration,
-    cacheStats 
+    cacheStats,
+    fallbackParams
   } = useHistoricalContent();
 
   // Cargar estado persistido al inicializar
@@ -105,6 +106,21 @@ export default function ContentScreen() {
     
     loadInitialState();
   }, []);
+
+  // Escuchar fallbackParams para actualizar la UI cuando se use contenido fallback
+  useEffect(() => {
+    if (fallbackParams) {
+      console.log('🔄 Actualizando UI con parámetros fallback:', fallbackParams);
+      setYear(fallbackParams.year);
+      setRegion(fallbackParams.region);
+      setTopic(fallbackParams.topic);
+      
+      // Guardar los nuevos parámetros en AsyncStorage
+      saveState(STORAGE_KEYS.YEAR, fallbackParams.year);
+      saveState(STORAGE_KEYS.REGION, fallbackParams.region);
+      saveState(STORAGE_KEYS.TOPIC, fallbackParams.topic);
+    }
+  }, [fallbackParams]);
 
   // Generar contenido cuando cambien los parámetros (solo después de cargar estado)
   useEffect(() => {
