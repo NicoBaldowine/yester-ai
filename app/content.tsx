@@ -93,11 +93,14 @@ export default function ContentScreen() {
   // Cargar estado persistido al inicializar
   useEffect(() => {
     const loadInitialState = async () => {
+      console.log('🔄 Cargando estado inicial...');
       const persistedState = await loadPersistedState();
+      console.log('📋 Estado persistido cargado:', persistedState);
       setYear(persistedState.year);
       setRegion(persistedState.region);
       setTopic(persistedState.topic);
       setIsStateLoaded(true);
+      console.log('✅ Estado inicial cargado, isStateLoaded = true');
     };
     
     loadInitialState();
@@ -105,8 +108,14 @@ export default function ContentScreen() {
 
   // Generar contenido cuando cambien los parámetros (solo después de cargar estado)
   useEffect(() => {
-    if (!isStateLoaded) return; // Esperar a que se cargue el estado inicial
+    console.log('🔄 useEffect generateContent - isStateLoaded:', isStateLoaded, 'params:', { year, region, topic });
     
+    if (!isStateLoaded) {
+      console.log('⏳ Estado no está listo, saliendo...');
+      return; // Esperar a que se cargue el estado inicial
+    }
+    
+    console.log('🎯 Llamando generateContent con parámetros:', { year, region, topic });
     generateContent({
       year,
       region,

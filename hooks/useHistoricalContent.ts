@@ -69,9 +69,16 @@ export function useHistoricalContent(): UseHistoricalContentResult {
   // Cancelation flag
   const cancelationRef = useRef<boolean>(false);
 
+  // Wrapper para setEvents con logging
+  const setEventsWithLogging = useCallback((newEvents: HistoricalEvent[]) => {
+    console.log('📝 Actualizando eventos:', newEvents.length, 'eventos');
+    setEvents(newEvents);
+  }, []);
+  
   // Cargar cache al inicializar
   useEffect(() => {
     const initializeCache = async () => {
+      console.log('🔄 Inicializando cache...');
       await loadCacheFromStorage();
       
       // Probar conectividad a Supabase
@@ -81,6 +88,7 @@ export function useHistoricalContent(): UseHistoricalContentResult {
         await debugSupabase.testConnection();
       }
       
+      console.log('✅ Cache inicializado, cacheLoaded = true');
       setCacheLoaded(true);
       await loadCacheStats();
     };
@@ -90,22 +98,31 @@ export function useHistoricalContent(): UseHistoricalContentResult {
 
   // Efecto para cargar contenido cacheado automáticamente cuando esté listo
   useEffect(() => {
+    console.log('🔍 Verificando carga automática - cacheLoaded:', cacheLoaded, 'initialParams:', initialParams);
+    
     if (cacheLoaded && initialParams) {
       const cacheKey = getCacheKey(initialParams);
       const cachedEvents = contentCache.get(cacheKey);
       
+      console.log('🔍 Buscando cache para key:', cacheKey);
+      console.log('🔍 Cache keys disponibles:', Array.from(contentCache.keys()));
+      console.log('🔍 Contenido encontrado:', cachedEvents ? `${cachedEvents.length} eventos` : 'ninguno');
+      
       if (cachedEvents && cachedEvents.length > 0) {
         console.log('⚡ Cargando contenido cacheado automáticamente para:', cacheKey);
-        setEvents(cachedEvents);
+        setEventsWithLogging(cachedEvents);
         setLastParams(cacheKey);
+      } else {
+        console.log('❌ No hay contenido cacheado para:', cacheKey);
       }
     }
-  }, [cacheLoaded, initialParams]);
+  }, [cacheLoaded, initialParams, setEventsWithLogging]);
 
   // Cargar estadísticas de cache
   const loadCacheStats = async () => {
     try {
       const localCount = contentCache.size;
+      console.log('📊 Cache stats - Local count:', localCount);
       
       let globalStats = null;
       try {
@@ -130,18 +147,26 @@ export function useHistoricalContent(): UseHistoricalContentResult {
   }, []);
 
   const generateContent = useCallback(async (params: GenerationParams) => {
+    console.log('🎯 generateContent llamado con params:', params);
+    
     // Guardar parámetros iniciales para carga automática
     if (!initialParams) {
+      console.log('💾 Guardando parámetros iniciales:', params);
       setInitialParams(params);
     }
     
     // Esperar a que el cache esté cargado
-    if (!cacheLoaded) return;
+    if (!cacheLoaded) {
+      console.log('⏳ Cache no está listo, saliendo...');
+      return;
+    }
 
     const cacheKey = getCacheKey(params);
+    console.log('🔑 Cache key generado:', cacheKey);
     
     // Si es la misma consulta que la anterior, no hacer nada
     if (lastParams === cacheKey) {
+      console.log('🔄 Misma consulta que la anterior, no hacer nada');
       return;
     }
 
@@ -176,7 +201,7 @@ export function useHistoricalContent(): UseHistoricalContentResult {
           return;
         }
         
-        setEvents(cachedEvents);
+        setEventsWithLogging(cachedEvents);
         setLastParams(cacheKey);
         setShowSkeleton(false);
         return;
@@ -221,7 +246,7 @@ export function useHistoricalContent(): UseHistoricalContentResult {
           // Guardar en cache local para próxima vez
           contentCache.set(cacheKey, supabaseEvents);
           await saveCacheToStorage();
-          setEvents(supabaseEvents);
+          setEventsWithLogging(supabaseEvents);
           setShowSkeleton(false);
           await loadCacheStats(); // Actualizar stats
           return;
@@ -273,7 +298,7 @@ export function useHistoricalContent(): UseHistoricalContentResult {
         }
         
         // NO usar skeleton para AI generation, solo mostrar contenido
-        setEvents(aiEvents);
+        setEventsWithLogging(aiEvents);
         await loadCacheStats(); // Actualizar stats
         
       } catch (err) {
@@ -287,13 +312,13 @@ export function useHistoricalContent(): UseHistoricalContentResult {
         const fallbackEvents = getFallbackEvents(params);
         contentCache.set(cacheKey, fallbackEvents);
         await saveCacheToStorage();
-        setEvents(fallbackEvents);
+        setEventsWithLogging(fallbackEvents);
         
       } finally {
         setIsLoading(false); // Solo apagar isLoading
       }
     }, 300); // 300ms debounce
-  }, [getCacheKey, lastParams, isLoading, cacheLoaded, initialParams]);
+  }, [lastParams, isLoading, cacheLoaded, initialParams, setEventsWithLogging]);
 
   const clearError = useCallback(() => {
     setError(null);
