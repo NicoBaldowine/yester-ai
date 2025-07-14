@@ -1,3 +1,4 @@
+import { ModernLoader } from '@/components/ModernLoader';
 import { ProfileScreen } from '@/components/ProfileScreen';
 import { RegionSelector } from '@/components/RegionSelector';
 import { SkeletonLoader } from '@/components/SkeletonLoader';
@@ -11,14 +12,13 @@ import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
     Dimensions,
     Image,
     ScrollView,
     StyleSheet,
     Text,
     TouchableOpacity,
-    View,
+    View
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -169,7 +169,7 @@ export default function ContentScreen() {
       <View style={styles.loadingScreen}>
         {/* Center Content */}
         <View style={styles.loadingContent}>
-          <ActivityIndicator size="large" color="#000000" style={styles.loader} />
+          <ModernLoader size={48} color="#000000" style={styles.loader} />
           <Text style={styles.loadingTitle}>
             Yester in {year}{'\n'}exploring {topic} {getTopicEmoji(topic)}{'\n'}of {region}..
           </Text>
