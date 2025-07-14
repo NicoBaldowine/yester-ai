@@ -55,6 +55,7 @@ export function useHistoricalContent(): UseHistoricalContentResult {
   const [lastParams, setLastParams] = useState<string>('');
   const [cacheLoaded, setCacheLoaded] = useState(false);
   const [cacheStats, setCacheStats] = useState<{ local: number; global: number; totalUsage: number }>();
+  const [initialParams, setInitialParams] = useState<GenerationParams | null>(null);
   
   // Crear instancia del servicio de Gemini (solo una vez)
   const geminiService = useRef(createGeminiService(Config.GEMINI_API_KEY));
@@ -87,6 +88,20 @@ export function useHistoricalContent(): UseHistoricalContentResult {
     initializeCache();
   }, []);
 
+  // Efecto para cargar contenido cacheado automáticamente cuando esté listo
+  useEffect(() => {
+    if (cacheLoaded && initialParams) {
+      const cacheKey = getCacheKey(initialParams);
+      const cachedEvents = contentCache.get(cacheKey);
+      
+      if (cachedEvents && cachedEvents.length > 0) {
+        console.log('⚡ Cargando contenido cacheado automáticamente para:', cacheKey);
+        setEvents(cachedEvents);
+        setLastParams(cacheKey);
+      }
+    }
+  }, [cacheLoaded, initialParams]);
+
   // Cargar estadísticas de cache
   const loadCacheStats = async () => {
     try {
@@ -115,6 +130,11 @@ export function useHistoricalContent(): UseHistoricalContentResult {
   }, []);
 
   const generateContent = useCallback(async (params: GenerationParams) => {
+    // Guardar parámetros iniciales para carga automática
+    if (!initialParams) {
+      setInitialParams(params);
+    }
+    
     // Esperar a que el cache esté cargado
     if (!cacheLoaded) return;
 
@@ -273,7 +293,7 @@ export function useHistoricalContent(): UseHistoricalContentResult {
         setIsLoading(false); // Solo apagar isLoading
       }
     }, 300); // 300ms debounce
-  }, [getCacheKey, lastParams, isLoading, cacheLoaded]);
+  }, [getCacheKey, lastParams, isLoading, cacheLoaded, initialParams]);
 
   const clearError = useCallback(() => {
     setError(null);
