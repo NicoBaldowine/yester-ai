@@ -1,7 +1,7 @@
 import { Typography } from '@/constants/Typography';
-import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
+import { X } from 'lucide-react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import {
     Dimensions,
@@ -153,16 +153,16 @@ export function YearSelector({ visible, currentYear, onClose, onSelect }: YearSe
           pointerEvents="none"
         />
 
-        {/* Floating Cancel Button with Blur/Glass Effect */}
-        <BlurView intensity={20} tint="light" style={[styles.cancelButton, { bottom: 40 + insets.bottom }]}>
+        {/* Close Button with X icon - Same style as profile N */}
+        <View style={[styles.closeButton, { top: insets.top + 10 }]}>
           <TouchableOpacity
-            style={styles.cancelButtonTouchable}
+            style={styles.closeButtonTouchable}
             onPress={handleCancel}
             activeOpacity={0.8}
           >
-            <Text style={styles.cancelButtonText}>Cancel</Text>
+            <X size={20} color="#1A1A1A" />
           </TouchableOpacity>
-        </BlurView>
+        </View>
 
         {/* Floating Select Button - Right */}
         <TouchableOpacity
@@ -233,25 +233,21 @@ const styles = StyleSheet.create({
     zIndex: 2,
     pointerEvents: 'none',
   },
-  cancelButton: {
+  closeButton: {
     position: 'absolute',
-    // bottom now dynamic with safe area
-    left: 24,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 25,
+    right: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(0, 0, 0, 0.07)',
     overflow: 'hidden',
-    zIndex: 10,
+    zIndex: 100,
   },
-  cancelButtonTouchable: {
+  closeButtonTouchable: {
     width: '100%',
     height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  cancelButtonText: {
-    ...Typography.cancelButtonText,
-    color: '#1A1A1A',
   },
   selectButton: {
     position: 'absolute',
